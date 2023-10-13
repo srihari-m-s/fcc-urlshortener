@@ -24,10 +24,7 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-let url = {
-  original_url: "",
-  short_url: "",
-};
+let url = {};
 
 // Challenge endpoint
 app.post("/api/shorturl", function (req, res) {
@@ -39,12 +36,9 @@ app.post("/api/shorturl", function (req, res) {
   if (!urlRegex.test(original)) {
     return res.json({ error: "invalid url" });
   }
-  // console.log(url, original);
-  let short = /\.[a-zA-Z0-9]+\./g.exec(original)[0].slice(1, -1);
-  short = short.slice(0, 1) + short.slice(-1);
-
-  url.original_url = original;
-  url.short_url = short;
+  let short = Object.keys(url).length + 1;
+  url[short] = original;
+  // console.log(url, original, short);
 
   res.json({ original_url: original, short_url: short });
 });
@@ -52,8 +46,10 @@ app.post("/api/shorturl", function (req, res) {
 // get short_url state
 app.get(`/api/shorturl/:short`, function (req, res) {
   let short = req.params.short;
-  if (url.short_url === short) {
-    res.redirect(url.original_url);
+  // console.log(url, short);
+
+  if (url[short]) {
+    res.redirect(url[short]);
   } else {
     res.json({ error: "unrecognised short URL" });
   }
