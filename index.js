@@ -1,12 +1,25 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import mongoose from "mongoose";
+import db from "./db.js";
 
+// Express setup
 dotenv.config();
 const app = express();
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
+
+// Url Schema
+const { Schema } = mongoose;
+
+const urlSchema = new Schema({
+  original_url: String,
+  short_url: String,
+});
+
+const Url = mongoose.model("Url", urlSchema);
 
 // Middlewares
 app.use(cors());
@@ -19,15 +32,8 @@ app.get("/", function (req, res) {
   res.sendFile(process.cwd() + "/views/index.html");
 });
 
-// Your first API endpoint
-app.get("/api/hello", function (req, res) {
-  res.json({ greeting: "hello API" });
-});
-
-let url = {};
-
 // Challenge endpoint
-app.post("/api/shorturl", function (req, res) {
+app.post("/api/shorturl", async function (req, res) {
   let formData = req.body;
   let original = formData.url;
 
@@ -36,22 +42,32 @@ app.post("/api/shorturl", function (req, res) {
   if (!urlRegex.test(original)) {
     return res.json({ error: "invalid url" });
   }
-  let short = Object.keys(url).length + 1;
-  url[short] = original;
-  // console.log(url, original, short);
+  let short = /\.[a-zA-Z0-9]+\./g.exec(original)[0].split(".")[1];
+  short = short.slice(0, 1) + short.slice(-1);
+  // console.log(original, short);
 
-  res.json({ original_url: original, short_url: short });
+  const newUrl = new Url({ original_url: original, short_url: short });
+
+  try {
+    const savedUrl = await newUrl.save();
+    const { original_url, short_url } = savedUrl;
+    res.json({ original_url: original_url, short_url: short_url });
+  } catch (error) {
+    res.status(500).json({ error: "An error occured" });
+  }
+
+  // res.json({ original_url: original, short_url: short });
 });
 
 // get short_url state
-app.get(`/api/shorturl/:short`, function (req, res) {
+app.get(`/api/shorturl/:short`, async function (req, res) {
   let short = req.params.short;
-  // console.log(url, short);
 
-  if (url[short]) {
-    res.redirect(url[short]);
-  } else {
-    res.json({ error: "unrecognised short URL" });
+  try {
+    const { original_url } = await Url.findOne({ short_url: short }).exec();
+    res.redirect(original_url);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
   }
 });
 
