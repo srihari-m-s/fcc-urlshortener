@@ -40,20 +40,21 @@ app.post("/api/shorturl", async function (req, res) {
   // Validity check
   const urlRegex = /^(https?):\/\/w{3}\.[a-zA-Z]+\.[a-zA-Z]+/g;
   if (!urlRegex.test(original)) {
-    return res.json({ error: "invalid url" });
-  }
-  let short = /\.[a-zA-Z0-9]+\./g.exec(original)[0].split(".")[1];
-  short = short.slice(0, 1) + short.slice(-1);
-  // console.log(original, short);
+    res.json({ error: "invalid url" });
+  } else {
+    let short = /\.[a-zA-Z0-9]+\./g.exec(original)[0].split(".")[1];
+    short = short.slice(0, 1) + short.slice(-1);
+    // console.log(original, short);
 
-  const newUrl = new Url({ original_url: original, short_url: short });
+    const newUrl = new Url({ original_url: original, short_url: short });
 
-  try {
-    const savedUrl = await newUrl.save();
-    const { original_url, short_url } = savedUrl;
-    res.json({ original_url: original_url, short_url: short_url });
-  } catch (error) {
-    res.status(500).json({ error: "An error occured" });
+    try {
+      const savedUrl = await newUrl.save();
+      const { original_url, short_url } = savedUrl;
+      res.json({ original_url: original_url, short_url: short_url });
+    } catch (error) {
+      res.status(500).json({ error: "An error occured" });
+    }
   }
 
   // res.json({ original_url: original, short_url: short });
