@@ -68,9 +68,9 @@ app.get(`/api/shorturl/:short`, async function (req, res) {
   let short = req.params.short;
   console.log("get", short);
   try {
-    const { original_url } = await Url.findOne({ short_url: short }).exec();
-    console.log("redirect to", original_url);
-    res.redirect(original_url);
+    const responseDocument = await Url.findOne({ short_url: short }).exec();
+    console.log("redirect to", responseDocument);
+    res.redirect(responseDocument?.original_url);
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "An error occurred" });
